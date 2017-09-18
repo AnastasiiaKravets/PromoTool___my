@@ -1,24 +1,29 @@
 import unittest
-from authorization_page.Utilities_for_authorization import AuthorizationPage
+from authorization_page.AuthorizationPage import AuthorizationPage
 from BasePage import BasePage
 from home_page.HomePage import HomePage
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from Parser import Parser
 
 
 
 class AuthorizationTest(unittest.TestCase, BasePage):
     base_url = 'https://qa05.promotool.temabit.com/'
+    browser = Parser().get_browser_name()
 
     def setUp(self):
-        #base_page = BasePage.get_instance()
-        #self.driver = BasePage().get_driver()
+        """For launch from Jenkins"""
+        """if self.browser == 'Chrome':
+            self.driver = webdriver.Chrome('c:\Program Files (x86)\ChromeDriver\chromedriver.exe')
+        if self.browser == "IE":
+            self.driver = webdriver.Ie('c:\Program Files (x86)\ChromeDriver\IEDriverServer_32.exe')
+        self.driver.get(self.base_url + 'authentication')"""
 
         self.driver = webdriver.Chrome('c:\Program Files (x86)\ChromeDriver\chromedriver.exe')
-        #self.driver = webdriver.Ie('c:\Program Files (x86)\ChromeDriver\IEDriverServer_32.exe')
-
         self.driver.get(self.base_url + 'authentication')
+
 
     def tearDown(self):
         self.driver.close()
