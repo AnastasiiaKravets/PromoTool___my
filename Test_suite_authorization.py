@@ -1,7 +1,7 @@
 import unittest
-from authorization.Utilities_for_authorization import AuthorizationPage
+from authorization_page.Utilities_for_authorization import AuthorizationPage
 from BasePage import BasePage
-from Home.HomePage import HomePage
+from home_page.HomePage import HomePage
 from selenium import webdriver
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
