@@ -21,7 +21,7 @@ class AuthorizationPage(BasePage):
     username_input = (By.ID, 'username')
     password_input = (By.ID, 'password')
     sign_in_button = (By.TAG_NAME, 'button')
-    forget_password_link = (By.CLASS_NAME, 'b-authentication__footer')
+    forget_password_link = (By.CSS_SELECTOR, "a[href = '/recovery-password']")
     english_button = (By.CLASS_NAME, 'b-authentication__flag_en')
     czech_button = (By.CLASS_NAME, 'b-authentication__flag_cs')
     germany_button = (By.CLASS_NAME, 'b-authentication__flag_de')
@@ -63,12 +63,14 @@ class AuthorizationPage(BasePage):
     def enter_username(self, username=''):
         input_field = self.wait.until(EC.visibility_of_element_located(self.username_input),
                                       'Username input field is not visible')
+        input_field.clear()
         input_field.send_keys(username)
         return self
 
     def enter_password(self, password=''):
         input_field = self.wait.until(EC.visibility_of_element_located(self.password_input),
                                       'Password input field is not visible')
+        input_field.clear()
         input_field.send_keys(password)
         return self
 
@@ -78,9 +80,9 @@ class AuthorizationPage(BasePage):
         return self
 
     def click_forget_password(self):
-        forgot_link = self.wait.until(EC.visibility_of_element_located(self.forget_password_link),
+        forget_link = self.wait.until(EC.visibility_of_element_located(self.forget_password_link),
                                       'Forgot password link is not visible')
-        forgot_link.click()
+        forget_link.click()
         return self
 
     def change_language(self, language):
@@ -118,7 +120,7 @@ class AuthorizationPage(BasePage):
 
 
 
-    def login(self, username = 'admin', password = 'admin'):
+    def login(self, username = 'Test1111', password = 'Test'):
         self.enter_username(username)
         self.enter_password(password)
         self.click_sign_in()
