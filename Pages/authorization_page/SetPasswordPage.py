@@ -2,11 +2,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-class SetPasswordPage:
+from BasePage import BasePage
 
-    def __init__(self, driver_instance):
-        self.driver = driver_instance
-        self.wait = WebDriverWait(self.driver, 10)
+
+class SetPasswordPage(BasePage):
 
     app_name = (By.TAG_NAME, 'h1')
     password_label = (By.CSS_SELECTOR, "label[for = 'password']")
@@ -19,11 +18,10 @@ class SetPasswordPage:
     english_button = (By.CSS_SELECTOR, "span[lang = 'en']")
     czech_button = (By.CSS_SELECTOR, "span[lang = 'cs']")
     germany_button = (By.CSS_SELECTOR, "span[lang = 'de']")
-    #notification = (By.CLASS_NAME, 'k-notification-wrap')
-
+    notification = (By.CLASS_NAME, 'k-notification-wrap')
 
     def is_image_present(self):
-        header = self.wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'b-authentication__header_logo')),
+        header = self.wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'b-set-password__header_logo')),
                                  'The Logo image is not visible')
         logo_img = header.find_elements_by_tag_name('img')
         if len(logo_img) > 0:
@@ -38,18 +36,20 @@ class SetPasswordPage:
     def enter_password(self, password=''):
         input_field = self.wait.until(EC.visibility_of_element_located(self.password_input),
                                       'Password input field is not visible')
+        input_field.clear()
         input_field.send_keys(password)
         return self
 
     def enter_re_password(self, re_password=''):
         input_field = self.wait.until(EC.visibility_of_element_located(self.re_password_input),
                                       'Re-password input field is not visible')
+        input_field.clear()
         input_field.send_keys(re_password)
         return self
 
     def click_change_password(self):
         change_password_button = self.wait.until(EC.element_to_be_clickable(self.change_pass_button),
-                                            'Change password button is not clickable')
+                                                 'Change password button is not clickable')
         change_password_button.click()
         return self
 
@@ -69,15 +69,41 @@ class SetPasswordPage:
 
     def click_back_to_login(self):
         back_to_login = self.wait.until(EC.visibility_of_element_located(self.back_to_login_link),
-                                   'Back to login link is not visible')
+                                        'Back to login link is not visible')
         back_to_login.click()
         return self
 
+    def get_notification(self):
+        notification = WebDriverWait(self.driver, 3).until(EC.visibility_of_element_located(self.notification),
+                                                           'Notification is not visible')
+        return notification.text
 
+    def password_label_text(self):
+        password_text = self.wait.until(EC.visibility_of_element_located(self.password_label),
+                                        'Password label is not visible')
+        return password_text.text
 
+    def password_placeholder(self):
+        placeholder = self.wait.until(EC.visibility_of_element_located(self.password_input),
+                                      'Password input is not visible')
+        return placeholder.get_attribute('placeholder')
 
+    def re_password_label_text(self):
+        re_password_text = self.wait.until(EC.visibility_of_element_located(self.re_password_label),
+                                           'Password label is not visible')
+        return re_password_text.text
 
+    def re_password_placeholder(self):
+        placeholder = self.wait.until(EC.visibility_of_element_located(self.re_password_input),
+                                      'Password input is not visible')
+        return placeholder.get_attribute('placeholder')
 
+    def change_password_text(self):
+        change_password_button = self.wait.until(EC.visibility_of_element_located(self.change_pass_button),
+                                                 'Change password button is not visible')
+        return change_password_button.text
 
-
-
+    def back_to_login_text(self):
+        back_to_login = self.wait.until(EC.visibility_of_element_located(self.back_to_login_link),
+                                        'Back to login link is not visible')
+        return back_to_login.text
