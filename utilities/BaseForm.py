@@ -1,4 +1,4 @@
-import time
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -97,3 +97,20 @@ class BaseForm(BasePage):
         select.click()
         self.multiple_select_by_index(index_list, select_name)
         return self
+
+    def clear_field(self, element_locator, error='Can not clear field in form'):
+        hidden_input = self.wait.until(EC.presence_of_element_located(element_locator), 'Can not find field for clear')
+        field_parent_span = WebDriverWait(hidden_input, 5).until(EC.visibility_of_element_located((By.XPATH, '../..')),
+                                                                 'Can not find field for clear')
+        self.driver.execute_script("return arguments[0].scrollIntoView();", field_parent_span)
+
+        ActionChains(self.driver).move_to_element(field_parent_span).perform()
+
+        close_icon = WebDriverWait(field_parent_span, 5).until(EC.visibility_of_any_elements_located(
+            (By.CSS_SELECTOR, 'span.k-icon.k-i-close')), 'There is no clear button for field')[0]
+        try:
+            close_icon.click()
+        except:
+            raise Exception(error)
+        return self
+

@@ -36,20 +36,37 @@ class PromoDetailPage(BasePage):
         return self
 
     def click_save_button(self):
-        self.wait.until(EC.element_to_be_clickable(self.save_button), '"Save" button is not clickable') \
+        self.wait_spiner_loading()
+        button = self.wait.until(EC.visibility_of_element_located(self.save_button), 'Save button is missing')
+        self.wait_element_has_not_state(self.save_button, 'k-state-disabled', 'Save button is disabled')
+        button.click()
+        self.wait_spiner_loading()
+        return self
+
+    def click_cancel_promo_button(self):
+        self.wait.until(EC.element_to_be_clickable(self.cancel_promo_button), '"Cancel promo" button is not clickable') \
             .click()
         return self
 
     def click_cancel_template_button(self):
-        self.wait.until(EC.element_to_be_clickable(self.cancel_template_button),
-                        '"Cancel Template" button is not clickable') \
-            .click()
+        self.wait_spiner_loading()
+        button = self.wait.until(EC.element_to_be_clickable(self.cancel_template_button),
+                        '"Cancel Template" button is not clickable')
+        self.wait_element_has_not_state(self.cancel_template_button, 'k-state-disabled', '"Cancel Template" button is disabled')
+        button.click()
         return self
 
-    def click_create_promo_button(self):
-        self.wait.until(EC.element_to_be_clickable(self.create_promo_button), '"Create promo" button is not clickable') \
-            .click()
-        return self
+    def create_promo(self):
+        self.wait_spiner_loading()
+        button = self.wait.until(EC.element_to_be_clickable(self.create_promo_button),
+                                 '"Create promo" button is not clickable')
+        self.wait_element_has_not_state(self.create_promo_button, 'k-state-disabled',
+                                        '"Create promo" button is disabled')
+        url = self.driver.current_url
+        button.click()
+        self.wait_for_url_changes(url)
+        self.wait_spiner_loading()
+        return PromoDetailPage(self.driver)
 
     def get_promo_detail_tab(self):
         tab_strip = self.wait.until(

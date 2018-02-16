@@ -1,8 +1,6 @@
 import random
-import time
 from datetime import date, timedelta
 
-import unittest
 import utilities
 from BaseTest import BaseTest
 from Pages.home_page.HomePage import HomePage
@@ -18,7 +16,7 @@ from Pages.promo_type_page.PromoTypePage import PromoTypePage
 from utilities import utils
 from utilities.DataBase import DataBase
 from utilities.PromoRequest import PromoRequest
-from utilities.Table import Table, TableFilter
+from utilities.Table import Table
 
 
 class PromoTemplateTest(BaseTest):
@@ -47,7 +45,6 @@ class PromoTemplateTest(BaseTest):
         self.driver.get(self.base_url + 'promo-type/{0}'.format(self.promo_id))
         self.type_page = NewPromoTypePage(self.driver)
 
-    @unittest.expectedFailure  # Add translation
     def test_0_validity_message(self):
         """Try to create template with expired, not set or has not started validity"""
         valid_from = ['NULL',
@@ -60,14 +57,14 @@ class PromoTemplateTest(BaseTest):
         subtest_name = ['Validity of Promo Type not set',
                         'Promo type validity expired',
                         "Promo type hasn't started yet"]
-        message = ['Platnost typu akce není nastavena',
-                   'Platnost typu akce skončila',
-                   'Typem akce ještě nezačala']
+        message = ['Špatná doba platnosti nebo platnost vypršela!',
+                   'Špatná doba platnosti nebo platnost vypršela!',
+                   'Akce ještě nezačala']
         assertion_error = ['Wrong message for Validity of Promo Type not set',
                            'Wrong message for expired validity from/to date',
                            "Wrong message 'Promo type hasn't started yet'"]
 
-        for i in range(3):
+        for i in range(len(valid_from)):
             if i == 0:
                 self.data_base.execute("UPDATE [PromoToolGlobus].[PromoTool].[PromoActionType] "
                                        "SET ValidFrom = NULL, ValidTo = NULL, templateId = NULL "
@@ -82,7 +79,6 @@ class PromoTemplateTest(BaseTest):
             with self.subTest(subtest_name[i]):
                 self.assertEqual(message[i], self.type_page.get_dialog_message(),
                                  assertion_error[i])
-                print(self.type_page.get_dialog_message())
             self.type_page.click_ok_to_pop_up_dialog()
 
     def test_1_create_new_template(self):
@@ -149,13 +145,14 @@ class PromoTemplateTest(BaseTest):
         basic_info = BasicInformation(self.driver)
 
         with self.subTest('Basic information'):
-            data_list = utils.get_promo_type_info_from_database_and_request(driver=self.driver, promo_id=self.promo_id,
-                                                                            template_id=template_id)
+            data_list = utils.get_promo_type_info_from_database(driver=self.driver, promo_id=self.promo_id,
+                                                                template_id=template_id)
 
             self.assertEqual('Základní informace', basic_info.get_title_text(), 'Wrong title for "Basic information"')
             labels_list = basic_info.get_all_labels_text()
-            for i in range(len(labels_list) - 1):
+            for i in range(len(labels_list)):
                 self.assertEqual(basic_info_labels[i], labels_list[i], 'Wrong translation for Basic info labels')
+
             self.assertTrue(basic_info.is_input_disabled(basic_info.code_input), '"Code" input should be disabled')
             self.assertTrue(basic_info.is_input_disabled(basic_info.external_code_input),
                             '"External code" input should be disabled')
@@ -216,9 +213,9 @@ class PromoTemplateTest(BaseTest):
             self.assertTrue(pages_view.is_button_disabled(pages_view.delete_button, 'Delete'),
                             '"Delete" button should be disabled')
             self.assertTrue(pages_view.is_element_present(pages_view.main_headers_table),
-                            'There are no table headers in "Financial information" widget')
+                            'There are no table headers in "Pages view" widget')
             self.assertTrue(pages_view.is_element_present(pages_view.main_content_table),
-                            'There are no table content in "Financial information" widget')
+                            'There are no table content in "Pages view" widget')
 
         with self.subTest('Departments view'):
             departments_view = DepartmentViewWidget(self.driver)
@@ -320,121 +317,18 @@ class PromoTemplateTest(BaseTest):
         template_id = utils.get_existed_template(self.driver, self.promo_id)
 
         for i in range(2):
-            data_list = utils.get_promo_type_info_from_database_and_request(driver=self.driver, promo_id=self.promo_id,
-                                                                            template_id=template_id)
+            data_list = utils.get_promo_type_info_from_database(driver=self.driver, promo_id=self.promo_id,
+                                                                template_id=template_id)
             self.driver.get('{}promo-detail/{}'.format(self.base_url, template_id))
 
             promo_detail_page = PromoDetailPage(self.driver)
             promo_detail_page.wait_spiner_loading()
 
             promo_detail_page.click_additional_info()
-            additional_info = NewPromoTypePage(self.driver)
-            additional_info.wait_spiner_loading()
             with self.subTest('Additional info'):
-                self.assertIn(additional_info.get_dropdown_value_text(additional_info.validity_input),
-                              data_list['validity'],
-                              '"validity" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['validity number'],
-                                 additional_info.get_input_text(additional_info.number_validy_input),
-                                 '"validity number" in template does not coincide with Promo type data')
-                self.assertIn(additional_info.get_dropdown_value_text(additional_info.start_date_validy_input),
-                              data_list['day of week'],
-                              '"day of week" in template does not coincide with Promo type data')
-                self.assertIn(additional_info.get_dropdown_value_text(additional_info.date_validy_input),
-                              data_list['date'],
-                              '"date" in template does not coincide with Promo type data')
-                self.assertIn(additional_info.get_dropdown_value_text(additional_info.range_input),
-                              data_list['range'],
-                              '"range" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['range number'],
-                                 additional_info.get_input_text(additional_info.number_range_input),
-                                 '"range number" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['setting targets'],
-                                 additional_info.get_checkbox_value(additional_info.setting_targets),
-                                 '"setting targets" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['split KPI per pages'],
-                                 additional_info.get_checkbox_value(additional_info.split_KPI_per_pages),
-                                 '"split KPI per pages" in template does not coincide with Promo type data')
-                for i in range(len(data_list['parameters'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(additional_info.parametrs_split_input)[i],
-                                  data_list['parameters'][i],
-                                  '"parameters" in template does not coincide with Promo type data')
-                self.assertListEqual(data_list['assortment'],
-                                     additional_info.get_assortment_value_from_additional_info(),
-                                     '"assortment" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['one supplier'],
-                                 additional_info.get_checkbox_value(additional_info.one_supplier),
-                                 '"one supplier" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['only goods in stock'],
-                                 additional_info.get_checkbox_value(additional_info.only_goods),
-                                 '"only goods in stock" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['order planning'],
-                                 additional_info.get_checkbox_value(additional_info.order_planning),
-                                 '"order planning" in template does not coincide with Promo type data')
-                self.assertIn(additional_info.get_dropdown_value_text(additional_info.how_to_order_input),
-                              data_list['how to order'],
-                              '"how to order" in template does not coincide with Promo type data')
-                for i in range(len(data_list['region'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(additional_info.region_input)[i],
-                                  data_list['region'][i],
-                                  '"region" in template does not coincide with Promo type data')
-                for i in range(len(data_list['supermarket'])):
-                    self.assertIn(data_list['supermarket'][i],
-                                  additional_info.get_multiselect_value_text(additional_info.supermarket_input)[i],
-                                  '"supermarket" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['mutation'], additional_info.get_checkbox_value(additional_info.mutation),
-                                 '"mutation" in template does not coincide with Promo type data')
-                for i in range(len(data_list['distribution channel'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(
-                        additional_info.distribution_channel_input)[i], data_list['distribution channel'][i],
-                                  '"distribution channel" in template does not coincide with Promo type data')
-                for i in range(len(data_list['advertising channel'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(
-                        additional_info.advertising_channel_input)[i], data_list['advertising channel'][i],
-                                  '"advertising channel" in template does not coincide with Promo type data')
-                for i in range(len(data_list['print advertising'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(
-                        additional_info.print_advertising_input)[i], data_list['print advertising'][i],
-                                  '"print advertising" in template does not coincide with Promo type data')
-                for i in range(len(data_list['format'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(additional_info.format_input)[i],
-                                  data_list['format'][i],
-                                  '"format" in template does not coincide with Promo type data')
-                for i in range(len(data_list['distribution'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(additional_info.distribution_input)[i],
-                                  data_list['distribution'][i],
-                                  '"distribution" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['electronic version'],
-                                 additional_info.get_checkbox_value(additional_info.electronic_version),
-                                 '"electronic version" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['external agency'],
-                                 additional_info.get_input_text(additional_info.external_agency_input),
-                                 '"external agency" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['web globus'],
-                                 additional_info.get_checkbox_value(additional_info.web_globus),
-                                 '"web globus" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['web shop'], additional_info.get_checkbox_value(additional_info.web_shop),
-                                 '"web shop" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['direct mail'],
-                                 additional_info.get_checkbox_value(additional_info.direct_mail),
-                                 '"direct mail" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['shelf labels'],
-                                 additional_info.get_checkbox_value(additional_info.shelf_labels),
-                                 '"shelf labels" in template does not coincide with Promo type data')
-                for i in range(len(data_list['type of labeles'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(additional_info.type_of_labels_input)[i],
-                                  data_list['type of labeles'][i],
-                                  '"type of labeles" in template does not coincide with Promo type data')
-                for i in range(len(data_list['POS support'])):
-                    self.assertIn(additional_info.get_multiselect_value_text(additional_info.pos_support_input)[i],
-                                  data_list['POS support'][i],
-                                  '"POS support" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['defined direct costs'],
-                                 additional_info.get_checkbox_value(additional_info.defined_direct_costs),
-                                 '"defined direct costs" in template does not coincide with Promo type data')
-                self.assertEqual(data_list['suppliers contributions'],
-                                 additional_info.get_checkbox_value(additional_info.suppliers_contributions),
-                                 '"suppliers contributions" in template does not coincide with Promo type data')
+                utils.compare_additional_info_with_type_data(data_list, self.driver,
+                                                             'in template does not coincide with Promo type data')
+
             if i == 0:
                 PromoRequest(self.driver).create_update_promo_type(promo_type_id=self.promo_id, name='Something new',
                                                                    template_id=template_id)
@@ -510,16 +404,19 @@ class PromoTemplateTest(BaseTest):
                 .click_create_template_button()
             pages_view_widget = PagesViewWidget(self.driver)
             template_id = utils.get_template_id(self.promo_id)
+            if template_id is None:
+                raise Exception('New promo template was not created')
             pages_view_table = Table(self.driver, pages_view_widget.get_table_content())
-            position_input = pages_view_table.get_row(0)[5]
+            position_input = pages_view_table.get_row(0)[pages_view_table.get_column_index(pages_view_widget.assortment_header)]
             with self.subTest('Article(s)'):
                 if range in 'Article(s)':
                     self.assertEqual(1, pages_view_table.count_rows(),
                                      'For "Article" (Range) on promo detail should be only one page')
-                    self.assertEqual(str(range_number), pages_view_table.get_value_from_input(position_input))
+                    self.assertEqual(str(range_number), pages_view_table.get_value_from_input(position_input),
+                                     'Position number does not math range number is promo type')
             if i == 0:
                 with self.subTest("Assortment"):
-                    pages_view_widget.choose_assortment(pages_view_table.get_row(0))
+                    pages_view_widget.choose_assortment(0)
                     self.assertListEqual(pages_view_widget.get_assortment_value(pages_view_table.get_row(0)),
                                          PromoRequest(self.driver).get_assortment(template_id),
                                          "Available assortment in promo template don't corespond with "
@@ -562,27 +459,3 @@ class PromoTemplateTest(BaseTest):
         template_page.click_yes_to_pop_up_dialog()
         template_page.wait_for_url_contain('promo-type',
                                            'After click Yes option to pop up Unsaved data was not opened another page')
-
-    def add_pages(self):
-        self.driver.get(
-            '{}promo-detail/{}'.format(self.base_url, utils.get_existed_template(self.driver, self.promo_id)))
-        pages_view = PagesViewWidget(self.driver)
-        pages_view.add_new_page()
-        time.sleep(5)
-        pages_view.delete_page(0)
-        time.sleep(6)
-
-    def table(self):
-        # TODO
-        template_id = 535849
-        self.driver.get('{}promo-detail/{}'.format(self.base_url, template_id))
-        pages_view = PagesViewWidget(self.driver)
-        table = TableFilter(self.driver)
-        headers = table.get_all_headers_from_table(pages_view.get_headers_table())
-        table.filter_from_header_by_string(headers[0], 'Is equal to', '1')
-        # time.sleep(3)
-        table.filter_from_header_by_string(headers[0], 'Starts with', '296', and_or_state='or')
-        # time.sleep(5)
-        table.clear_filter_form(headers[0])
-        # time.sleep(3)
-        table.filter_from_header_by_string(headers[0], 'Starts with', '296', and_or_state='and')

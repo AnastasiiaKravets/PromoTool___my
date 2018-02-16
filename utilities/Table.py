@@ -12,6 +12,7 @@ from utilities.Parser import Parser
 
 
 class TableFilter(object):
+
     def __init__(self, driver):
         self.driver = driver
         self.wait = WebDriverWait(self.driver, 10)
@@ -136,6 +137,8 @@ class TableFilter(object):
                                          ((By.CSS_SELECTOR, 'li.k-item.k-filter-item.k-state-default.k-last')))[0]
         time.sleep(0.1)  # for click exactly on Filter option
         filter_btn.click()
+        return self.wait.until(EC.visibility_of_any_elements_located((By.CSS_SELECTOR, 'div.k-filterable.k-content')),
+                               'Filterable content element is absent')[0]
 
     def submit_filtering(self):
 
@@ -215,26 +218,27 @@ class TableFilter(object):
         }
         state_dropdown = (By.CSS_SELECTOR, 'span[class="k-widget k-dropdown k-header"]')
 
-        self.get_filter_form(header)
+        filter_content = self.get_filter_form(header)
+        filter_wait = WebDriverWait(filter_content, 5)
 
         if first_state is not None:
-            first_state_dropdown = self.wait.until(EC.visibility_of_any_elements_located(state_dropdown))[0]
+            first_state_dropdown = filter_wait.until(EC.visibility_of_any_elements_located(state_dropdown))[0]
             first_state_dropdown.click()
 
             self.select_option_from_dropdown(state_dict=state, state=first_state)
         if first_state_string is not None:
-            first_input = self.wait.until(
+            first_input = filter_wait.until(
                 EC.visibility_of_any_elements_located(
                     (By.CSS_SELECTOR, 'input[data-bind="value:filters[0].value"]')))[0]
             first_input.clear()
             first_input.send_keys(first_state_string)
         self.choose_and_or_option(and_or_state)
         if second_state is not None:
-            second_state_dropdown = self.wait.until(EC.visibility_of_any_elements_located(state_dropdown))[1]
+            second_state_dropdown = filter_wait.until(EC.visibility_of_any_elements_located(state_dropdown))[1]
             second_state_dropdown.click()
             self.select_option_from_dropdown(state_dict=state, state=second_state)
         if second_state_string is not None:
-            second_input = self.wait.until(
+            second_input = filter_wait.until(
                 EC.visibility_of_any_elements_located(
                     (By.CSS_SELECTOR, 'input[data-bind="value: filters[1].value"]')))[0]
             second_input.clear()
@@ -355,28 +359,17 @@ class TableFilter(object):
         # TODO filtering from header by percent value
         pass
 
-    def drag_and_drop_custom(self, source, target):
-        js_filepath = "C:\\Users\\d.stoliar\\PycharmProjects\\PromoTool\\utilities\\drag_and_drop_helper.js"
-        js_file = open(js_filepath, "r")
-        java_script = ""
-
-        for line in js_file:
-            java_script += line
-
-        js_file.close()
-        self.driver.execute_script(java_script + "$(arguments[0]).simulateDragDrop({ dropTarget: arguments[1]});",
-                                   source, target)
-
     def change_column_location(self, changing_header, new_location_header):
 
         if Parser().get_browser_name() is 'IE':
-            None
+            pass
         else:
             ActionChains(self.driver).drag_and_drop(changing_header, new_location_header).perform()
 
     def wait_table_to_load(self, table_element):
         WebDriverWait(table_element, 15).until(
-            EC.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="k-loading-image"]')))
+            EC.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="k-loading-image"]')), 'Table was not loaded')
+        return self
 
     def get_all_headers_table(self):
         BasePage(self.driver).wait_spiner_loading()
@@ -477,21 +470,31 @@ class TableFilter(object):
 
 
 class Table:
+    nested_table_parent = (By.XPATH, "(//tbody[@role='rowgroup'])")
+
     def __init__(self, driver, table_content):
         """
-
         :param driver:
         :param table_content: webelement of table content
         """
         self.driver = driver
         self.table_element = table_content
+        self.wait = WebDriverWait(self.table_element, 15)
 
     def count_rows(self):
         """
         :return: number of rows
         """
-        count = WebDriverWait(self.table_element, 15).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'tr')))
-        return len(count)
+        rows = self.wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, 'tr')))
+        return len(rows)
+
+    def count_master_rows(self):
+        """
+        :return: number of rows in main table, exclude nested rows
+        """
+        rows = self.wait.until(EC.presence_of_all_elements_located(
+            (By.CSS_SELECTOR, 'tr.k-master-row')))
+        return len(rows)
 
     def get_all_cells_element(self):
         """
@@ -499,7 +502,7 @@ class Table:
         """
         cells_list = []
         try:
-            rows = WebDriverWait(self.table_element, 2).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'tr')))
+            rows = self.wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, 'tr')))
         except:
             return cells_list
 
@@ -543,18 +546,57 @@ class Table:
                         return True
         return False
 
-    def get_row(self, index):
+    def get_row(self, index=0):
         """
         :type index: int
-        :param index: serial number of the row
+        :param index: serial number of the row, for default get first row
         :return: list of cell webelements are contained in row
         """
-        row = WebDriverWait(self.table_element, 15).until(EC.presence_of_all_elements_located((By.TAG_NAME, 'tr')))[
-            index]
+        row = self.wait.until(EC.presence_of_all_elements_located((By.TAG_NAME, 'tr')))[index]
         cells = row.find_elements_by_tag_name('td')
         return cells
 
+    def get_master_row(self, index=0):
+        """
+        :type index: int
+        :param index: serial number of the row, for default get first row
+        :return: list of cell webelements are contained in row
+        """
+        row = self.wait.until(EC.presence_of_all_elements_located
+                                                          ((By.CSS_SELECTOR, 'tr.k-master-row')))[index]
+        cells = row.find_elements_by_tag_name('td')
+        return cells
+
+    def get_row_as_webelement(self, index=0):
+        """
+        :param index: serial number of the row, for default get first row
+        :return: single webelement of row
+        """
+        try:
+            row = self.wait.until(EC.presence_of_all_elements_located
+                                                              ((By.TAG_NAME, 'tr')))[index]
+        except Exception as error:
+            raise Exception('There is not {}-th row. {}'.format(index+1, error))
+        return row
+
+    def get_master_row_as_webelement(self, index=0):
+        """
+        :param index: serial number of the row, for default get first row
+        :return: single webelement of master row
+        """
+        try:
+            row = self.wait.until(EC.presence_of_all_elements_located(
+                (By.CSS_SELECTOR, 'tr.k-master-row')))[index]
+        except Exception as error:
+            raise Exception('There is not {}-th row. {}'.format(index+1, error))
+        return row
+
     def get_row_by_id(self, id_row, column=0):
+        """
+        :param id_row: item id to find row
+        :param column: in which column should find id
+        :return: list of webelements of row with the desired item id
+        """
         first = 0
         last = self.count_rows() - 1
         i = 0
@@ -563,7 +605,8 @@ class Table:
                 return self.get_row(first)
             if len(self.get_row(last)[column].text) > 0 and int(self.get_row(last)[column].text) == int(id_row):
                 return self.get_row(last)
-            if len(self.get_row(int(last / 2))[column].text) > 0 and int(self.get_row(int(last / 2))[column].text) < int(id_row):
+            if len(self.get_row(int(last / 2))[column].text) > 0 and int(
+                    self.get_row(int(last / 2))[column].text) < int(id_row):
                 first = int(last / 2)
                 last -= 1
             else:
@@ -573,15 +616,25 @@ class Table:
                 raise Exception('There is no {} id'.format(id_row))
             i += 1
 
+    def get_nested_columns(self, column_number: int=0):
+
+        parent_elem = WebDriverWait(self.table_element, 5).until(EC.presence_of_all_elements_located((By.TAG_NAME,
+                            "td")), 'The nested row cant be located')
+
+        # element_list = parent_elem.find_elements_by_tag_name("td")
+        return parent_elem[column_number]
+
     def wait_table_to_load(self):
-        WebDriverWait(self.table_element, 15).until(EC.visibility_of_any_elements_located((By.TAG_NAME, 'tr')))
+        BasePage(self.driver).wait_spiner_loading()
+        self.wait.until(EC.visibility_of_any_elements_located((By.TAG_NAME, 'tr')),
+                                                    'Table was not loaded')
         return self
 
     def open_nested_table(self, cell_element):
         self.driver.execute_script("return arguments[0].scrollIntoView();", cell_element)
         expand_webelement = WebDriverWait(cell_element, 5).until(EC.element_to_be_clickable
-                                             ((By.CSS_SELECTOR, 'a[class="k-icon k-i-expand"]')),
-                                             'Icon in hierarchy cell is absent')
+                                                                 ((By.CSS_SELECTOR, 'a[class="k-icon k-i-expand"]')),
+                                                                 'Icon in hierarchy cell is absent')
         if Parser().get_browser_name() is 'IE':
             self.driver.execute_script("arguments[0].click();", expand_webelement)
         else:
@@ -602,19 +655,35 @@ class Table:
         input = WebDriverWait(cell_element, 5).until(EC.visibility_of_element_located((By.TAG_NAME, 'input')), error)
         return input.get_attribute('value')
 
-    def get_nested_tables(self, error=None):
+    def is_input_disabled(self, cell_element, error=None):
+        input = WebDriverWait(cell_element, 5).until(EC.visibility_of_element_located((By.TAG_NAME, 'input')), error)
+        span_parent = WebDriverWait(input, 5).until(EC.presence_of_element_located((By.XPATH, '..')),
+                                                    'Span parent element is absent')
+        if 'disabled' in span_parent.get_attribute('class'):
+            return True
+        else:
+            return False
 
+    def is_input_in_cell(self, cell_element):
+        try:
+            WebDriverWait(cell_element, 0).until(EC.presence_of_element_located((By.TAG_NAME, 'input')))
+            return True
+        except:
+            return False
+
+    def get_nested_rows(self, error=None):
+        '''For Page planning nested table (child tables can be closed or opened)'''
         parent_elem = WebDriverWait(self.table_element, 5).until(EC.presence_of_element_located(
-                            (By.XPATH, "(//tbody[@role='rowgroup'])[1]")), error)
+            (By.XPATH, "(//tbody[@role='rowgroup'])[1]")), error)
 
         nested_tables_list = parent_elem.find_elements_by_tag_name("tr")
 
         return nested_tables_list
 
     def get_opened_nested_tables(self, error=None):
-
+        '''For Page planning nested table when child tables were opened'''
         parent_elem = WebDriverWait(self.table_element, 5).until(EC.presence_of_element_located(
-                            (By.XPATH, "(//tbody[@role='rowgroup'])[1]")), error)
+            (By.XPATH, "(//tbody[@role='rowgroup'])[1]")), error)
 
         nested_tables_list = parent_elem.find_elements_by_xpath('//tr[contains(@class,"k-detail-row")]')
 
@@ -628,14 +697,15 @@ class Table:
 
     def open_all_nested_tables(self):
 
-        nested_tables_list = self.get_nested_tables()
+        nested_tables_list = self.get_nested_rows()
 
         for nested_element in nested_tables_list:
 
             self.driver.execute_script("return arguments[0].scrollIntoView(true);", nested_element)
             expand_webelement = WebDriverWait(nested_element, 5).until(EC.element_to_be_clickable
-                                                                 ((By.CSS_SELECTOR, 'a[class="k-icon k-i-expand"]')),
-                                                                 'Icon in hierarchy cell is absent')
+                                                                       ((By.CSS_SELECTOR,
+                                                                         'a[class="k-icon k-i-expand"]')),
+                                                                       'Icon in hierarchy cell is absent')
             if Parser().get_browser_name() is 'IE':
                 self.driver.execute_script("arguments[0].click();", expand_webelement)
             else:
@@ -656,6 +726,16 @@ class Table:
                 self.driver.execute_script("arguments[0].click();", collapse_webelement)
             else:
                 collapse_webelement.click()
+
+    def find_element_in_row(self, row_index, element_locator, error='The wanted element is missing in the row'):
+        """
+        :param row_index: int
+        :type element_locator: tuple
+        :return: Webelement by locator
+        """
+        row = self.get_row_as_webelement(row_index)
+        return WebDriverWait(row, 5).until(EC.presence_of_element_located(element_locator), error)
+
 
     def get_web_element_of_cell_or_row_by_column_index_and_text_in_cell(self, column_inx_of_name, name_to_search,
                                                                         column_inx_with_link, full_row=False):
@@ -678,8 +758,79 @@ class Table:
             cell_web = row_web[column_inx_of_name]
             cell_val = cell_web.get_attribute("textContent")
 
-            if full_row is False and cell_val == name_to_search and column_inx_with_link < len(row_web) and full_row is False:
+            if full_row is False and cell_val == name_to_search and column_inx_with_link < len(
+                    row_web) and full_row is False:
                 return row_web[column_inx_with_link]
             elif cell_val == name_to_search and column_inx_with_link < len(row_web) and full_row is True:
                 return row_web
         return 0
+
+    def click_checkbox_in_the_row_by_column_number(self, row_webelement, column_inx: int):
+        """
+        This method is used to get the webelement of cell from the row webelement by knowing the index of column
+
+        :param column_inx: index number of the column we want to search in
+        :param row_webelement: the webelement of row or the list of webelements of cells
+
+        :return: webelement of the the cell
+        """
+        cell_element = row_webelement
+
+        if type(row_webelement) is not list:
+            try:
+                cell_webelement_list = WebDriverWait(row_webelement, 5).until(EC.visibility_of_all_elements_located((
+                    By.TAG_NAME, 'input')), 'Lock checkbox in the page planning row is not available')
+            except:
+                return
+        else:
+            cell_webelement_list = row_webelement
+
+        if len(cell_webelement_list) > 0:
+            cell_element = cell_webelement_list[column_inx]
+
+        # "2" - serial number of column where the checkbox for unblocking the position is located
+        # cell_element = self.table_element.get_cell_from_list_of_columns(row_webelement, 2)
+
+        self.driver.execute_script("return arguments[0].scrollIntoView(true);", cell_element)
+
+        checkbox_element = WebDriverWait(cell_element, 5).until(EC.element_to_be_clickable((By.TAG_NAME, 'input')))
+
+        self.driver.execute_script("return arguments[0].scrollIntoView(true);", cell_element)
+
+        checkbox_element.click()
+
+        return self
+
+    def get_cell_by_row_and_column_inx(self, row_inx: int=0, column_inx: int=0):
+        """
+        This method is used to get the webelement of cell from the row webelement by knowing the indexes of row and column
+
+        :param column_inx: index number of the column we want to search in
+        :param row_inx: the row index
+
+        :return: webelement of the the cell
+        """
+        row_webelement = self.get_row_as_webelement(row_inx)
+
+        cell_webelement_list = WebDriverWait(row_webelement, 5).until(EC.visibility_of_all_elements_located((
+            By.TAG_NAME, 'td')), 'cell web element in Table is not available')
+
+        return cell_webelement_list[column_inx]
+
+    def get_column_index(self, column_header_locator):
+        """
+        Method for find out the current location of the column
+        :param column_header_locator: header locator of desired column
+        :return: int column index
+        """
+        parent_div = self.wait.until(EC.presence_of_element_located
+                                     ((By.XPATH, 'parent::div[contains(@class, "k-grid")]')),
+                                     "Can't find parent element for table content")
+        header_table = WebDriverWait(parent_div, 5).until(EC.presence_of_element_located(BasePage.main_headers_table),
+                                                          'There is not headers table for table content')
+        column_header = WebDriverWait(header_table, 5).until(EC.presence_of_element_located(column_header_locator),
+                                                             'There is not desired header')
+        if 'display: none;' in column_header.get_attribute('style'):
+            raise Exception('Desired column is invisible')
+        return int(column_header.get_attribute('data-index'))
+

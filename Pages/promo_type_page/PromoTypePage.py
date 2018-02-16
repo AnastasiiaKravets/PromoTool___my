@@ -22,6 +22,7 @@ class PromoTypePage(BasePage):
     name_checkbox = (By.CSS_SELECTOR, 'input[data-field="Name"]')
     template_checkbox = (By.CSS_SELECTOR, 'input[data-field="TemplateId"]')
 
+
     def get_new_type_button(self):
         return self.wait.until(EC.visibility_of_element_located(self.new_type_button), 'New type button is not visible')
 

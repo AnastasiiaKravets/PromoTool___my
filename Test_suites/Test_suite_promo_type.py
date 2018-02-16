@@ -5,6 +5,7 @@ from random import randrange, randint
 
 import utilities
 from BaseTest import BaseTest
+from Pages.home_page.HomePage import HomePage
 from Pages.promo_type_page.NewPromoTypePage import NewPromoTypePage
 from Pages.promo_type_page.PromoTypePage import PromoTypePage
 from utilities.DataBase import DataBase
@@ -238,7 +239,7 @@ class PromoTypeTest(BaseTest):
         notification_error = new_promo_page.get_all_notification_text()
         if len(notification_error) == 0:
             raise Exception("Missing notification about creating promo type with existed data")
-        self.assertEqual('errorPromo action type with the same name or key for promotion code already exists',
+        self.assertEqual('errorTyp akce se stejným názvem, nebo klíč pro kód akce již existuje',
                          notification_error[0], 'Wrong notification text')
         # Check if there are unexpected notification
         with self.subTest():
@@ -354,7 +355,6 @@ class PromoTypeTest(BaseTest):
         # new_promo_page.wait_spiner_loading()
         time.sleep(1)
         new_id = data_base.get_last_id('[PromoToolGlobus].[PromoTool].[PromoActionType]')
-        print(last_id, new_id)
         if last_id == new_id:
             raise Exception("New promo type wasn't created")
         else:
@@ -364,13 +364,38 @@ class PromoTypeTest(BaseTest):
             data_base.execute(
                 'DELETE FROM [PromoToolGlobus].[PromoTool].[PromoActionType] WHERE [Id]={0}'.format(new_id))
 
-    def test_edit_existed_template(self):
+    def test_edit_existed_promo_type(self):
         # TODO this
         pass
 
     def test_unsaved_data_pop_up(self):
-        # TODO
-        pass
+        data_base = DataBase(utilities.DataBase.get_connection_parameters())
+        last_id = data_base.get_last_id('[PromoToolGlobus].[PromoTool].[PromoActionType]')
+        self.driver.get('{}promo-type/{}'.format(self.base_url, last_id))
+
+        promo_page = NewPromoTypePage(self.driver)
+        promo_page.wait_spiner_loading()
+        promo_page.enter_value(promo_page.name_input, 'New Name',
+                               'Can not enter value in Name field') \
+            .enter_value(promo_page.key_promotion_name_input, 'Some new description',
+                         'Can not enter value in Key for promotion name')
+
+        left_menu = HomePage(self.driver)
+        left_menu.click_promo_type_menuitem()
+
+        self.assertEqual('Všechna neuložená data budou ztracena. Chcete pokračovat?',
+                         promo_page.get_dialog_message(),
+                         'Wrong text for "All unsaved data will be lost. Continue?"')
+        promo_page.click_no_to_pop_up_dialog()
+        self.assertEqual('{}promo-type/{}'.format(self.base_url, last_id), self.driver.current_url,
+                         'After click No option to pop up Unsaved data was opened another page')
+        left_menu.click_promo_type_menuitem()
+        self.assertEqual('Všechna neuložená data budou ztracena. Chcete pokračovat?',
+                         promo_page.get_dialog_message(),
+                         'Wrong text for "All unsaved data will be lost. Continue?"')
+        promo_page.click_yes_to_pop_up_dialog()
+        promo_page.wait_for_url_contain('promo-type',
+                                           'After click Yes option to pop up Unsaved data was not opened another page')
 
     def change_columns_location(self):
         # TODO

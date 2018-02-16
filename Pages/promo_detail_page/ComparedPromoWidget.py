@@ -11,7 +11,7 @@ class ComparedPromoWidget(BaseWidget):
     def __init__(self, driver):
         super(ComparedPromoWidget, self).__init__(driver,
                                                   (By.CSS_SELECTOR, 'div[class="b-promo-compare k-grid k-widget"]'),
-                                                  'Select compared promo action')
+                                                  'Compared promo')
 
     def click_add_compared_action(self):
         button = self.wait.until(EC.visibility_of_element_located(self.add_compared_action_button),

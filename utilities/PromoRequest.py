@@ -11,11 +11,18 @@ from utilities.Parser import Parser
 class PromoRequest:
     def __init__(self, driver):
         self.driver = driver
-        self.host = Parser().get_base_host()
-        self.origin = 'https://' + self.host
+        parser = Parser()
+        if 'localhost' in parser.get_base_host():
+            self.host = 'qaglobus.promotool.temabit.com'
+            self.origin = 'http://' + parser.get_base_host()
+            self.requested_url = 'https://qaglobus.promotool.temabit.com'
+        else:
+            self.host = parser.get_base_host()
+            self.origin = 'https://' + self.host
+            self.requested_url = self.origin
 
-    def authorization_by_request(self, login='admin', password='admin', language='en'):
-        # TODO Реагування на мову
+
+    def authorization_by_request(self, login='admin', password='admin', language='cs'):
         post_headers = {
             'accept': "*/*",
             'accept-language': "uk,ru;q=0.8,en-US;q=0.5,en;q=0.3",
@@ -39,7 +46,7 @@ class PromoRequest:
         disable_warnings(InsecureRequestWarning)
         try:
             create_token = requests.post(
-                "{}/backend/createToken".format(self.origin),
+                "{}/backend/createToken".format(self.requested_url),
                 data=body, headers=post_headers, verify=False)
             if create_token.status_code is not 200:
                 raise Exception
@@ -61,6 +68,8 @@ class PromoRequest:
             }
             self.driver.add_cookie(cookies_dict)
             self.driver.execute_script("localStorage.setItem('accessToken', '" + token + "');")
+            self.driver.execute_script("localStorage.setItem('locale', '" + language + "');")
+
         except Exception as error:
             unittest.TestCase().fail('Authorization request failed with {}. {}'.format(error, create_token.text))
 
@@ -80,7 +89,7 @@ class PromoRequest:
 
         try:
             create_template = requests.post(
-                "{}/backend/api/promoActionTypes/createtemplate/{}".format(self.origin, promo_type_id),
+                "{}/backend/api/promoActionTypes/createtemplate/{}".format(self.requested_url, promo_type_id),
                 headers=post_headers, verify=False)
             if create_template.status_code is not 200:
                 raise Exception
@@ -104,7 +113,7 @@ class PromoRequest:
         }
         try:
             delete_template = requests.post(
-                "{}/backend/api/promoActionTypes/{}/removeTemplate".format(self.origin, promo_type_id),
+                "{}/backend/api/promoActionTypes/{}/removeTemplate".format(self.requested_url, promo_type_id),
                 headers=post_headers, verify=False)
         except Exception as error:
             unittest.TestCase().fail('Creating new template fail with {}. {}'.format(error, delete_template.text))
@@ -140,7 +149,7 @@ class PromoRequest:
         disable_warnings(InsecureRequestWarning)
         try:
             create_token = requests.request("DELETE",
-                                            "{}/backend/api/admin/roles/{}".format(self.origin, str(role_id)),
+                                            "{}/backend/api/admin/roles/{}".format(self.requested_url, str(role_id)),
                                             data=body, headers=post_headers, verify=False)
             if create_token.status_code is not 200:
                 raise Exception
@@ -181,7 +190,7 @@ class PromoRequest:
         disable_warnings(InsecureRequestWarning)
         try:
             create_token = requests.request("POST",
-                                            "{}/backend/api/admin/roles/".format(self.origin),
+                                            "{}/backend/api/admin/roles/".format(self.requested_url),
                                             data=body, headers=post_headers, verify=False)
             if create_token.status_code == 201:
                 token = create_token.json()
@@ -234,7 +243,7 @@ class PromoRequest:
         disable_warnings(InsecureRequestWarning)
         try:
             create_token = requests.request("POST",
-                "{}/backend/api/admin/users".format(self.origin),
+                "{}/backend/api/admin/users".format(self.requested_url),
                 data=body, headers=post_headers, verify=False)
             if create_token.status_code == 201:
                 token = create_token.json()
@@ -268,7 +277,7 @@ class PromoRequest:
         }
         try:
             get_dictionary = requests.get(
-                "{}{}".format(self.origin, url),
+                "{}{}".format(self.requested_url, url),
                 headers=post_headers, verify=False)
             result_dict = {}
             for el in get_dictionary.json()['Data'][dictionary_name]:
@@ -288,7 +297,7 @@ class PromoRequest:
         }
         try:
             get_workflow_template = requests.get(
-                "{}/backend/workflow/templates".format(self.origin),
+                "{}/backend/workflow/templates".format(self.requested_url),
                 headers=post_headers, verify=False)
             result_dict = {}
             for el in get_workflow_template.json()['Data']:
@@ -308,7 +317,7 @@ class PromoRequest:
         }
         try:
             get_assortment = requests.get(
-                "{}/backend/api/promoaction/{}/additionalInfo".format(self.origin, template_id),
+                "{}/backend/api/promoaction/{}/additionalInfo".format(self.requested_url, template_id),
                 headers=post_headers, verify=False)
             result_list = []
             for el in get_assortment.json()['Data']['Assortment']:
@@ -412,7 +421,7 @@ class PromoRequest:
         }
         try:
             create_promo_type = requests.post(
-                "{}/backend/api/promoActionTypes/create/{}".format(self.origin, promo_type_id),
+                "{}/backend/api/promoActionTypes/create/{}".format(self.requested_url, promo_type_id),
                 headers=post_headers, data=json.dumps(body), verify=False)
             if create_promo_type.status_code is not 200:
                 raise Exception
@@ -432,7 +441,7 @@ class PromoRequest:
 
         try:
             create_action = requests.post(
-                "{}/backend/api/promoActionTypes/createpromoaction/{}".format(self.origin, promo_type_id),
+                "{}/backend/api/promoActionTypes/createpromoaction/{}".format(self.requested_url, promo_type_id),
                 headers=post_headers, verify=False)
             if create_action.status_code is not 200:
                 raise Exception
@@ -440,3 +449,45 @@ class PromoRequest:
 
         except Exception as error:
             unittest.TestCase().fail('Creating new template fail with {}. {}'.format(error, create_action.text))
+
+    def get_promo_type_info(self, promo_type_id):
+        headers = {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cookie': 'sessionId={}'.format(self.driver.get_cookie('sessionId')['value']),
+            'Host': self.host,
+            'Origin': self.origin,
+            'Referer': '{}/promo-type/{}'.format(self.origin, promo_type_id),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+        try:
+            get_promo_type_info = requests.get(
+                "{}/backend/api/promoActionTypes/{}".format(self.requested_url, promo_type_id), headers=headers, verify=False)
+            if get_promo_type_info.status_code is not 200:
+                raise Exception
+            return get_promo_type_info.json()['Data']
+        except Exception as error:
+            unittest.TestCase().fail("Can't get promo type info. {}, {}".format(error, get_promo_type_info.text))
+
+    def delete_promo_action(self, promo_action_id):
+        headers = {
+            'Accept': 'application/json, text/javascript, */*; q=0.01',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'content-type': "application/x-www-form-urlencoded; charset=UTF-8",
+            'Cookie': 'sessionId={}'.format(self.driver.get_cookie('sessionId')['value']),
+            'Host': self.host,
+            'Origin': self.origin,
+            'Referer': '{}/promo-detail/{}'.format(self.origin, promo_action_id),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+        try:
+            delete_action = requests.delete(
+                "{}/backend/api/promoaction/{}".format(self.requested_url, promo_action_id), headers=headers, verify=False)
+            if delete_action.status_code is not 200:
+                raise Exception
+        except Exception as error:
+            unittest.TestCase().fail("Can't delete promo action {}. {}, {}".format(promo_action_id, error, delete_action.text))
+
+

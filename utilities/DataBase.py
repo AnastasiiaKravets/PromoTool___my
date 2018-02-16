@@ -10,6 +10,7 @@ def get_connection_parameters():
         password=user_info._data_base_password
     )
 
+
 def escape_apostrophes_for_sql_query(input_string):
     # check if the input is really a string
     if not isinstance(input_string, str):
@@ -25,7 +26,7 @@ def escape_apostrophes_for_sql_query(input_string):
     elif len(input_string) > 0 and input_string.find("'") >= 0:
         # temp_res should contain all substrings divided by apostrophes
         temp_res = input_string.split("'")
-        count = 0 # count substrings
+        count = 0  # count substrings
         substr = ""
         for current_substr in temp_res:
             # if apostrophe was located at the beginning , just add 2 apostrophes at the beginning
@@ -43,6 +44,7 @@ def escape_apostrophes_for_sql_query(input_string):
     # just in unpredictable case - return the string unchanged
     else:
         return input_string
+
 
 class DataBase:
     def __init__(self, kwargs):
@@ -88,3 +90,11 @@ class DataBase:
     def get_last_id(self, table):
         return self.select_in_list(
             'SELECT TOP 1 [Id] FROM {0} ORDER BY [Id] DESC'.format(table))[0][0]
+
+    def get_id(self, select_string):
+        result = self.select_in_list(select_string)
+        try:
+            return result[0][0]
+        except:
+            return None
+

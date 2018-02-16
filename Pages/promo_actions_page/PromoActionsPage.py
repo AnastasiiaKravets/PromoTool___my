@@ -80,7 +80,7 @@ class PromoActionsPage(BaseForm):
         return 0
 
     def get_promo_action_details_by_name(self, promo_action_name, last_page=False):
-
+        ''' Extract Promo Action details from the grid '''
         self.wait_spiner_loading()
 
         last_table_button_web_element = self.wait.until(

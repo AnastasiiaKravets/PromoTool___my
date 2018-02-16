@@ -7,10 +7,6 @@ from BaseTest import BaseTest
 
 class AuthorizationPage(BasePage):
 
-    # @ TODO initialize singletone instance of webdriver
-    # base_page = BasePage.get_instance()
-    # driver = base_page.get_driver()
-
     app_name = (By.TAG_NAME, 'h1')
     username_label = (By.CSS_SELECTOR, "label[for = 'username']")
     password_label = (By.CSS_SELECTOR, "label[for = 'password']")

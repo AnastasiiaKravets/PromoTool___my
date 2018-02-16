@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from utilities.Table import TableFilter
-
+import time
 
 class BasePopUp(BasePage, TableFilter):
 
@@ -28,4 +28,9 @@ class BasePopUp(BasePage, TableFilter):
         WebDriverWait(self.driver, 5).until(EC.invisibility_of_element_located((By.CLASS_NAME, 'k-window')),
                                             '"{}" pop up window was not closed'.format(self.pop_up_name))
         return self
+
+
+
+
+
 

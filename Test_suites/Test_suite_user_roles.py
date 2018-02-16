@@ -70,7 +70,7 @@ class UserRolesTest(BaseTest):
 
                 # if there is no such entry in the DB , meaning role was not added, then no need to send POST request for deletion to the server
                 if role_id_grid == "error reading DB" or role_isactive_grid == "error reading DB":
-                    None
+                    pass
                 elif len(role_id_grid) > 0 and len(role_isactive_grid) > 0:
                     PromoRequest(self.driver).delete_role_request(role_id_grid, role_isactive_grid, role_name)
         self.driver.close()
@@ -157,7 +157,7 @@ class UserRolesTest(BaseTest):
         # # Verify that the new role appears in the DB and in the grid, and that the roles' parameters match
         # self.assertTrue(roles_menu.verify_new_role_grid_vs_db(self.role_name_special_characters),
         #                                                         "The grid data doesn't correpond to the DB data")
-
+        time.sleep(0.5)
         role_name_comparison_result = roles_menu.verify_role_parameters(self.role_name_special_characters)
         # test compare role name from the grid and from the GUI dialog
         self.assertTrue(role_name_comparison_result, "The name of the new role is wrong")
@@ -570,53 +570,53 @@ class UserRolesTest(BaseTest):
         else:
             drop_menu.sort_with_mouse(header_element)
         # ====================== "Operation name" column , Privileges table ====================== #
-        column_index = 2
-        # if we want to sort integers, then isInt is True
-        isInt = False
-
-        # Get the "Role name" column webelement from User roles page
-        header_element = roles_menu.webelement_of_operation_name_column_in_privilege_table()
-
-        # === Sort ascending "Role name" column from GUI with dropdown filters === #
-
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
-        # Get the list of webelements from the table
-        list_of_rows = table_parameters.get_all_cells_element()
-
-        # take the sorted data from the grid and index of the sorted column
-        kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
-
-        # take data from the grid and sort it according to Kendo algorithm, then
-        # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
-        kendo_sorted_ascending = kendo_sort_instance.sort_strings_ascending(isInt)
-
-        # === Sort descending "Role name" column from GUI with dropdown filters === #
-
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
-
-        # Get the list of webelements from the table
-        list_of_rows = table_parameters.get_all_cells_element()
-
-        # take the sorted data from the grid and index of the sorted column
-        kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
-
-        # take data from the grid and sort it according to Kendo algorithm, then
-        # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
-        kendo_sorted_descending = kendo_sort_instance.sort_strings_descending(isInt)
-
-        self.assertTrue(kendo_sorted_ascending, "Sorting ascending of 'Operation name' column has failed in Privilege table")
-        self.assertTrue(kendo_sorted_descending, "Sorting descending of 'Operation name' column has failed in Privilege table")
-        # reset previous sorting/cancel sorting of one column in order to sort another one
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
+        # column_index = 2
+        # # if we want to sort integers, then isInt is True
+        # isInt = False
+        #
+        # # Get the "Operation name" column webelement from User roles page
+        # header_element = roles_menu.webelement_of_operation_name_column_in_privilege_table()
+        #
+        # # === Sort ascending "Operation name" column from GUI with dropdown filters === #
+        #
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
+        # # Get the list of webelements from the table
+        # list_of_rows = table_parameters.get_all_cells_element()
+        #
+        # # take the sorted data from the grid and index of the sorted column
+        # kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
+        #
+        # # take data from the grid and sort it according to Kendo algorithm, then
+        # # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
+        # kendo_sorted_ascending = kendo_sort_instance.sort_strings_ascending(isInt)
+        #
+        # # === Sort descending "Operation name" column from GUI with dropdown filters === #
+        #
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
+        #
+        # # Get the list of webelements from the table
+        # list_of_rows = table_parameters.get_all_cells_element()
+        #
+        # # take the sorted data from the grid and index of the sorted column
+        # kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
+        #
+        # # take data from the grid and sort it according to Kendo algorithm, then
+        # # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
+        # kendo_sorted_descending = kendo_sort_instance.sort_strings_descending(isInt)
+        #
+        # self.assertTrue(kendo_sorted_ascending, "Sorting ascending of 'Operation name' column has failed in Privilege table")
+        # self.assertTrue(kendo_sorted_descending, "Sorting descending of 'Operation name' column has failed in Privilege table")
+        # # reset previous sorting/cancel sorting of one column in order to sort another one
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
 
         # ====================== "Operation URL" column , Privileges table ====================== #
         column_index = 3
@@ -910,101 +910,101 @@ class UserRolesTest(BaseTest):
             drop_menu.sort_with_mouse(header_element)
             drop_menu.sort_with_mouse(header_element)
         # ====================== "Role name" column , Roles table ====================== #
-        column_index = 1
-        # if we want to sort integers, then isInt is True
-        isInt = False
+        # column_index = 1
+        # # if we want to sort integers, then isInt is True
+        # isInt = False
+        #
+        # # Get the "Role name" column webelement from User roles page
+        # header_element = roles_menu.webelement_of_name_column_in_roles_table()
+        #
+        # # === Sort ascending "Role name" column from GUI with dropdown filters === #
+        #
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
+        #
+        # # Get the list of webelements from the table
+        # list_of_rows = table_parameters.get_all_cells_element()
+        #
+        # # take the sorted data from the grid and index of the sorted column
+        # kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
+        #
+        # # take data from the grid and sort it according to Kendo algorithm, then
+        # # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
+        # kendo_sorted_ascending = kendo_sort_instance.sort_strings_ascending(isInt)
+        #
+        # # === Sort descending "Role name" column from GUI with dropdown filters === #
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
+        #
+        # # Get the list of webelements from the table
+        # list_of_rows = table_parameters.get_all_cells_element()
+        #
+        # # take the sorted data from the grid and index of the sorted column
+        # kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
+        #
+        # # take data from the grid and sort it according to Kendo algorithm, then
+        # # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
+        # kendo_sorted_descending = kendo_sort_instance.sort_strings_descending(isInt)
+        #
+        # self.assertTrue(kendo_sorted_ascending, "Sorting ascending of 'Role name' column has failed in Roles table")
+        # self.assertTrue(kendo_sorted_descending, "Sorting descending of 'Role name' column has failed in Roles table")
+        # # reset previous sorting/cancel sorting of one column in order to sort another one
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
 
-        # Get the "Role name" column webelement from User roles page
-        header_element = roles_menu.webelement_of_name_column_in_roles_table()
-
-        # === Sort ascending "Role name" column from GUI with dropdown filters === #
-
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
-
-        # Get the list of webelements from the table
-        list_of_rows = table_parameters.get_all_cells_element()
-
-        # take the sorted data from the grid and index of the sorted column
-        kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
-
-        # take data from the grid and sort it according to Kendo algorithm, then
-        # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
-        kendo_sorted_ascending = kendo_sort_instance.sort_strings_ascending(isInt)
-
-        # === Sort descending "Role name" column from GUI with dropdown filters === #
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
-
-        # Get the list of webelements from the table
-        list_of_rows = table_parameters.get_all_cells_element()
-
-        # take the sorted data from the grid and index of the sorted column
-        kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
-
-        # take data from the grid and sort it according to Kendo algorithm, then
-        # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
-        kendo_sorted_descending = kendo_sort_instance.sort_strings_descending(isInt)
-
-        self.assertTrue(kendo_sorted_ascending, "Sorting ascending of 'Role name' column has failed in Roles table")
-        self.assertTrue(kendo_sorted_descending, "Sorting descending of 'Role name' column has failed in Roles table")
-        # reset previous sorting/cancel sorting of one column in order to sort another one
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
-
-        # ====================== "IsActive" column , Roles table ====================== #
-        column_index = 2
-        # if we want to sort integers, then isInt is True
-        isInt = False
-
-        # Get the "IsActive" column webelement from User roles page
-        header_element = roles_menu.webelement_of_isactive_column_in_roles_table()
-
-        # === Sort ascending "IsActive" column from GUI with mouse === #
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
-
-        # Get the list of webelements from the table
-        list_of_rows = table_parameters.get_all_cells_element()
-
-        # take the sorted data from the grid and index of the sorted column
-        kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
-
-        # take data from the grid and sort it according to Kendo algorithm, then
-        # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
-        kendo_sorted_ascending = kendo_sort_instance.sort_strings_ascending(isInt)
-
-        # === Sort descending "IsActive" column from GUI with mouse === #
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
-
-        # Get the list of webelements from the table
-        list_of_rows = table_parameters.get_all_cells_element()
-
-        # take the sorted data from the grid and index of the sorted column
-        kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
-
-        # take data from the grid and sort it according to Kendo algorithm, then
-        # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
-        kendo_sorted_descending = kendo_sort_instance.sort_strings_descending(isInt)
-
-        self.assertTrue(kendo_sorted_ascending, "Sorting ascending of 'IsActive' column has failed in Roles table")
-        self.assertTrue(kendo_sorted_descending, "Sorting descending of 'IsActive' column has failed in Roles table")
-        # reset previous sorting/cancel sorting of one column in order to sort another one
-        if Parser().get_browser_name() is 'IE':
-            self.driver.execute_script("arguments[0].click();", header_element)
-        else:
-            drop_menu.sort_with_mouse(header_element)
+        # # ====================== "IsActive" column , Roles table ====================== #
+        # column_index = 2
+        # # if we want to sort integers, then isInt is True
+        # isInt = False
+        #
+        # # Get the "IsActive" column webelement from User roles page
+        # header_element = roles_menu.webelement_of_isactive_column_in_roles_table()
+        #
+        # # === Sort ascending "IsActive" column from GUI with mouse === #
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
+        #
+        # # Get the list of webelements from the table
+        # list_of_rows = table_parameters.get_all_cells_element()
+        #
+        # # take the sorted data from the grid and index of the sorted column
+        # kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
+        #
+        # # take data from the grid and sort it according to Kendo algorithm, then
+        # # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
+        # kendo_sorted_ascending = kendo_sort_instance.sort_strings_ascending(isInt)
+        #
+        # # === Sort descending "IsActive" column from GUI with mouse === #
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
+        #
+        # # Get the list of webelements from the table
+        # list_of_rows = table_parameters.get_all_cells_element()
+        #
+        # # take the sorted data from the grid and index of the sorted column
+        # kendo_sort_instance = KendoSorting(self.driver, list_of_rows, column_index)
+        #
+        # # take data from the grid and sort it according to Kendo algorithm, then
+        # # take the same/sorted data from  the grid, and compare both results , if match then sorting was successful
+        # kendo_sorted_descending = kendo_sort_instance.sort_strings_descending(isInt)
+        #
+        # self.assertTrue(kendo_sorted_ascending, "Sorting ascending of 'IsActive' column has failed in Roles table")
+        # self.assertTrue(kendo_sorted_descending, "Sorting descending of 'IsActive' column has failed in Roles table")
+        # # reset previous sorting/cancel sorting of one column in order to sort another one
+        # if Parser().get_browser_name() is 'IE':
+        #     self.driver.execute_script("arguments[0].click();", header_element)
+        # else:
+        #     drop_menu.sort_with_mouse(header_element)
 
     # ============ Make columns visible or invisible =============== #
     def test_columns_check_uncheck_drop_down_roles_table(self):

@@ -1,22 +1,26 @@
 import time
 
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-from utilities.Parser import Parser
+from utilities import CustomWaits
 
 
 class BasePage(object):
-
     main_headers_table = (By.CSS_SELECTOR, 'div.k-grid-header')
     main_content_table = (By.CSS_SELECTOR, 'div.k-grid-content')
     main_footer_table = (By.CSS_SELECTOR, 'div.k-grid-footer')
 
+    wait_element_time = 10
+    wait_page_load_time = 60
+
     def __init__(self, driver):
         self.driver = driver
-        self.wait = WebDriverWait(self.driver, 10)
+        self.wait = WebDriverWait(self.driver, self.wait_element_time)
 
     def get_title_text(self):
         return self.wait.until(EC.visibility_of_element_located((By.TAG_NAME, 'h2')), 'Title is invisible').text
@@ -24,7 +28,7 @@ class BasePage(object):
     def get_title_from_toolbar(self):
         return self.wait.until(EC.visibility_of_element_located((By.CLASS_NAME, 'title')), 'Title is invisible').text
 
-    def enter_value(self, element_locator, value, error_message=None):
+    def enter_value(self, element_locator, value, error_message='Can not enter value'):
         try:
             input = self.wait.until(EC.visibility_of_element_located(element_locator))
             input.clear()
@@ -33,10 +37,21 @@ class BasePage(object):
         except:
             raise Exception(error_message)
 
-    def click_and_select_dropdown_option(self, state_dict, state, error_message=None, dropdown_element=None):
+    def enter_date(self, element_locator, value, error_message='Can not enter date'):
+        try:
+            input = self.wait.until(EC.visibility_of_element_located(element_locator))
+            input.clear()
+            input.send_keys(value)
+            input.send_keys(Keys.ENTER)
+            return self
+        except:
+            raise Exception(error_message)
+
+    def click_and_select_dropdown_option(self, state_dict, state, error_message='Can not select dropdown option',
+                                         dropdown_element=None):
         dropdown_element.click()
         try:
-            select_frame = WebDriverWait(self.driver, 2).until(EC.visibility_of_any_elements_located(
+            WebDriverWait(self.driver, 2).until(EC.visibility_of_any_elements_located(
                 (By.CSS_SELECTOR, "ul[class='k-list k-reset']")))[0]
         except:
             dropdown_element.click()
@@ -75,8 +90,11 @@ class BasePage(object):
             raise Exception('Checkbox ' + checkbox_name + ' had not been unchecked')
         return self
 
-    def get_link_from_cell(self, cell_element, error_message=None):
+    def get_link_from_cell(self, cell_element, error_message='There is any link in cell'):
         try:
+            link = WebDriverWait(cell_element, 2).until(EC.presence_of_element_located((By.CSS_SELECTOR, 'div.e-link')))
+            return link
+        except TimeoutException:
             link = WebDriverWait(cell_element, 2).until(EC.presence_of_element_located((By.TAG_NAME, 'a')))
             return link
         except:
@@ -87,13 +105,14 @@ class BasePage(object):
         self.driver.execute_script("return arguments[0].scrollIntoView();", link)
         link.click()
 
-    def get_visible_element(self, element_locator, error_message=None):
+    def get_visible_element(self, element_locator, error_message='Element is absent or invisible'):
         return self.wait.until(EC.visibility_of_element_located(element_locator), error_message)
 
-    def get_text_from_element(self, element_locator, error_message=None):
+    def get_text_from_element(self, element_locator, error_message='Element is absent or invisible'):
         return self.wait.until(EC.presence_of_element_located(element_locator), error_message).text
 
     def is_element_present(self, element_locator):
+        """It differs from the is_element_absent method of standby time, in this case the element is expected to 10 seconds"""
         try:
             element = self.wait.until(EC.presence_of_element_located(element_locator))
             if 'display: none;' in element.get_attribute('style'):
@@ -101,6 +120,18 @@ class BasePage(object):
             else:
                 return True
         except:
+            return False
+
+    def is_element_absent(self, element_locator):
+        """It differs from the is_element_present method of standby time, in this case the element is expected to 0 seconds"""
+        try:
+            element = WebDriverWait(self.driver, 0).until(EC.presence_of_element_located(element_locator))
+        except TimeoutException:
+            return True
+
+        if 'display: none;' in element.get_attribute('style'):
+            return True
+        else:
             return False
 
     def get_all_notification_text(self):
@@ -118,11 +149,17 @@ class BasePage(object):
             'Notification is not visible')
         return el[len(el) - 1].text
 
-    def wait_for_url_contain(self, expected_url, error=None):
-        WebDriverWait(self.driver, 5).until(EC.url_contains(expected_url), error)
+    def wait_for_url_contain(self, expected_url, error="Url does not contain desired url"):
+        WebDriverWait(self.driver, self.wait_page_load_time).until(EC.url_contains(expected_url), error)
+        return self
 
-    def wait_for_url_matches(self, expected_url, error=None):
-        WebDriverWait(self.driver, 5).until(EC.url_matches(expected_url), error)
+    def wait_for_url_matches(self, expected_url, error="Url does not match desired url"):
+        WebDriverWait(self.driver, self.wait_page_load_time).until(EC.url_matches(expected_url), error)
+        return self
+
+    def wait_for_url_changes(self, current_url, error="Url does not changed after 10 seconds"):
+        WebDriverWait(self.driver, self.wait_page_load_time).until(EC.url_changes(current_url), error)
+        return self
 
     def get_widget_window(self, error=None):
         return self.wait.until(EC.visibility_of_any_elements_located((By.CSS_SELECTOR, 'div.k-window')), error)[0]
@@ -136,8 +173,9 @@ class BasePage(object):
         return self
 
     def wait_spiner_loading(self):
-        WebDriverWait(self.driver, 15).until(
-            EC.invisibility_of_element_located((By.CSS_SELECTOR, 'div[class="k-loading-image"]')))
+        WebDriverWait(self.driver, self.wait_page_load_time).until_not(
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'div[class="k-loading-image"]')),
+            "Page or widget was not loaded after {} second".format(self.wait_page_load_time))
         return self
 
     def multiple_select_by_index(self, index_list=None, select_name=None):
@@ -203,13 +241,25 @@ class BasePage(object):
         return self
 
     def click_element(self, element_locator, error_massege):
-        self.wait.until(EC.element_to_be_clickable(element_locator), error_massege)
+        self.wait.until(EC.element_to_be_clickable(element_locator), error_massege).click()
         return self
 
     def get_table_content(self, error_message='Tables content is absent'):
         '''Returns the webelement of table's content without additional elements'''
-        return self.wait.until(EC.presence_of_element_located(self.main_content_table), error_message) \
-            .find_element_by_tag_name('table')
+        return self.wait.until(EC.presence_of_element_located(self.main_content_table), error_message)
 
     def get_headers_table(self, error_message='Headers table is absent'):
         return self.wait.until(EC.presence_of_element_located(self.main_headers_table), error_message)
+
+    def get_header(self, header_locator, error='The table header is absent'):
+        header = WebDriverWait(self.get_headers_table(), 5).until(EC.presence_of_element_located(header_locator), error)
+        self.driver.execute_script("return arguments[0].scrollIntoView();", header)
+        return header
+
+    def wait_element_has_state(self, element_locator, css_class='k-state-disabled', error='button still be active'):
+        self.wait.until(CustomWaits.element_has_css_class(element_locator, css_class), error)
+        return self
+
+    def wait_element_has_not_state(self, element_locator, css_class='k-state-disabled', error='button still be disabled'):
+        self.wait.until_not(CustomWaits.element_has_css_class(element_locator, css_class), error)
+        return self

@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 import utilities
 from Pages.promo_detail_page.PromoDetailPage import PromoDetailPage
+from utilities import CustomWaits
 from utilities.BaseForm import BaseForm
 from utilities.DataBase import DataBase
 from utilities.Parser import Parser
@@ -185,12 +186,17 @@ class NewPromoTypePage(BaseForm):
         return self
 
     def click_save_button(self):
+        self.wait_spiner_loading()
         button = self.wait.until(EC.visibility_of_element_located(self.save_button), 'Save button is missing')
-        if self.is_button_disabled(self.save_button, 'Save'):
-           raise Exception('"Save" button should be active')
-        else:
-            button.click()
+        self.wait_element_has_not_state(self.save_button, 'k-state-disabled', 'Save button is disabled')
+        button.click()
+        self.wait_spiner_loading()
+        # if self.is_button_disabled(self.save_button, 'Save'):
+        #     return self
+        # else:
+        #     raise Exception('"Save" button should be disabled after saving')
         return self
+
 
     def choose_assortment(self):
         input = self.wait.until(EC.presence_of_element_located(self.assortment_input),
@@ -243,18 +249,15 @@ class NewPromoTypePage(BaseForm):
     def click_create_template_button(self):
         button = self.wait.until(EC.visibility_of_element_located(self.create_template_button),
                         '"Create template" button is not visible')
-        if self.is_button_disabled(self.create_template_button) is True:
-            time.sleep(1)
-            if self.is_button_disabled(self.create_template_button) is True:
-                raise Exception('"Create template" button should be active')
+        self.wait_element_has_not_state(self.create_template_button, 'k-state-disabled',
+                                        '"Create template" button should be active')
         button.click()
         return PromoDetailPage(self.driver)
 
     def click_new_promo_button(self):
         button = self.wait.until(EC.visibility_of_element_located(self.new_promo_button),
                                  'New Promo button is invisible')
-        if self.is_button_disabled(self.new_promo_button) is True:
-            raise Exception('New Promo button should be active')
+        self.wait_element_has_not_state(self.new_promo_button, 'k-state-disabled', "New promo button still be disabled")
         button.click()
         return PromoDetailPage(self.driver)
 

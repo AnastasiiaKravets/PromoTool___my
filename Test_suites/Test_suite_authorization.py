@@ -1,9 +1,6 @@
 import random
 import string
 import time
-import unittest
-
-from selenium import webdriver
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -15,7 +12,6 @@ from Pages.authorization_page.SetPasswordPage import SetPasswordPage
 from Pages.home_page.HomePage import HomePage
 from utilities import EmailReader
 from utilities.DataBase import DataBase
-from utilities.Parser import Parser
 
 
 class AuthorizationTest(BaseTest):
@@ -83,26 +79,13 @@ class AuthorizationTest(BaseTest):
 
     def test_authorization_with_invalid_credential(self):
         """Enter special characters, sql injection, invalid pairs of password and login, long sequence of characters"""
-        chars_80= ''.join(
-            random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits) for _ in range(80))
         SQL_inject_A = 'admin OR 1=1'
-        SQL_inject_B = 'admin; DROP TABLE Users'
-        SQL_inject_C = '" or ""="'
-        SQL_inject_D = "'"
-        SQL_inject_E = ':'
-        SQL_inject_F = '"'
         value = [
             {'username': 'wrong_username', 'password': 'admin'},  # wrong username
             {'username': 'admin', 'password': 'wrong_pass'},  # wrong password
             {'username': '@#$%^', 'password': '@#$%^'},  # wrong symbol
             {'username': ' ', 'password': ' '},  # space input
-            {'username': chars_80, 'password': chars_80},  # wrong username and password 255 char
             {'username': SQL_inject_A, 'password': 'admin'},  # wrong username SQL injection A
-            {'username': SQL_inject_B, 'password': 'admin'},  # wrong username SQL injection B
-            {'username': SQL_inject_C, 'password': SQL_inject_C},  # wrong username SQL injection C
-            {'username': SQL_inject_D, 'password': 'admin'},  # wrong username SQL injection D
-            {'username': SQL_inject_E, 'password': 'admin'},  # wrong username SQL injection E
-            {'username': SQL_inject_F, 'password': 'admin'},  # wrong username SQL injection F
         ]
         authorization_page = AuthorizationPage(self.driver)
         for val in value:

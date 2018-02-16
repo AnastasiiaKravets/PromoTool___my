@@ -1,16 +1,16 @@
-from utilities.PromoRequest import PromoRequest
 from Pages.page_planning.PagePlanning import PagePlanning
 import time
 from BaseTest import BaseTest
 from utilities.Parser import Parser
 from utilities.Table import Table
+from utilities.TreeListPopUp import TreeListPopUp
 from Pages.article_list_page.ArticleListPage import ArticleListPage
 from Pages.promo_actions_page.PromoActionsPage import PromoActionsPage
 from utilities.PromoRequest import PromoRequest
 from Pages.promo_detail_page.PagesViewWidget import PagesViewWidget
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-
+from Pages.promo_detail_page.PromoDetailPage import PromoDetailPage
+from Pages.positions_view.PositionsView import PositionsView
 
 class PagePlanningTest(BaseTest):
 
@@ -27,8 +27,8 @@ class PagePlanningTest(BaseTest):
         self.driver.get(self.base_url + '404')
         PromoRequest(self.driver).authorization_by_request(login=self.autotest_user['login'],
                                                            password=self.autotest_user['password'], language='cs')
-        # time.sleep(2)
-        self.driver.get(self.base_url + 'article-planning/535882/2')#'promo-detail/535882')#"article-planning/535835/2" )# 'article-planning/417791/1')# 'article-planning/535797/1')
+
+        self.driver.get(self.base_url + 'article-planning/536124/1') #'article-planning/535882/2')
         self.page_planning_page = PagePlanning(self.driver)
         time.sleep(2)
         self.page_article_list = ArticleListPage(self.driver)
@@ -173,50 +173,12 @@ class PagePlanningTest(BaseTest):
 
             nested_table_inst = Table(self.driver, table_web_element)
 
-            list_of_webelements_nested_tables = nested_table_inst.get_nested_tables('The parent nested table cant be located')
+            list_of_webelements_nested_tables = nested_table_inst.get_nested_rows('The parent nested table cant be located')
             nested_table_inst.open_all_nested_tables()
 
             nested_table_inst.close_all_nested_tables(list_of_webelements_nested_tables)
             # open 1st position
             nested_table_inst.open_nested_table(list_of_webelements_nested_tables[0])
-
-    # def test_open_article_from_page_planning_table(self):
-    #     table_web_element = self.page_planning_page.get_table()
-    #
-    #     self.page_planning_page.wait_spiner_loading()
-    #
-    #     # check if there is at least 1 record/subtable present
-    #     if self.page_planning_page.check_if_main_table_exist():
-    #
-    #         nested_table_inst = Table(self.driver, table_web_element)
-    #
-    #         list_of_webelements_nested_tables = nested_table_inst.get_nested_tables('The parent nested table cant be located')
-    #
-    #         nested_table_inst.open_nested_table(list_of_webelements_nested_tables[0])
-    #
-    #         clear_first_nest_table = nested_table_inst.get_opened_nested_tables()
-    #         first_nested_table_inst = Table(self.driver, clear_first_nest_table[0])
-    #
-    #         article_row = first_nested_table_inst.get_web_element_of_cell_or_row_by_column_index_and_text_in_cell(6,
-    #                                                                                             self.article_name, 6)
-    #
-    #         self.driver.execute_script("return arguments[0].scrollIntoView(true);", article_row)
-    #
-    #         if Parser().get_browser_name() is 'IE':
-    #             self.driver.execute_script("arguments[0].click();", article_row)
-    #         else:
-    #             article_row.click()
-    #
-    #         article_link = first_nested_table_inst.get_web_element_of_cell_or_row_by_column_index_and_text_in_cell(6,
-    #                                                                                             self.article_name, 6)
-    #
-    #         if Parser().get_browser_name() is 'IE':
-    #             self.driver.execute_script("arguments[0].click();", article_link)
-    #         else:
-    #             article_link.click()
-    #
-    #         self.assertEqual('Seznam produktů', self.page_article_list.get_title().get_attribute("textContent"),
-    #                          'Article list page was not opened')
 
     def test_page_planning_open_via_promo_actions(self):
         """Verify opening of Page planning via Promo Actions page"""
@@ -245,7 +207,7 @@ class PagePlanningTest(BaseTest):
 
             nested_table_inst = Table(self.driver, table_web_element)
 
-            list_of_webelements_nested_tables = nested_table_inst.get_nested_tables(
+            list_of_webelements_nested_tables = nested_table_inst.get_nested_rows(
                 'The parent nested table cant be located')
 
             nested_table_inst.open_nested_table(list_of_webelements_nested_tables[0])
@@ -274,40 +236,132 @@ class PagePlanningTest(BaseTest):
             self.assertEqual('Seznam produktů', self.page_article_list.get_title().get_attribute("textContent"),
                              'Article list page was not opened')
 
-    def test_add_goods_article_list(self):
-        table_web_element = self.page_planning_page.get_table()
+    def test_add_goods_article_list(self, position_number: int=0):
 
-        self.page_planning_page.wait_spiner_loading()
+        click_column = 3
+        edit_column = 2
+        page_planning = PagePlanning(self.driver)
+        # page_planning.wait_spiner_loading()
 
-        if self.page_planning_page.check_if_main_table_exist():
-            nested_table_inst = Table(self.driver, table_web_element)
+        if page_planning.check_if_main_table_exist():
+            # page_planning.select_position_page_planning(position_number, click_column)
+            page_planning_table = Table(self.driver,
+                                        page_planning.get_table_content('Table content for page planning is absent'))
+            nested_rows = page_planning_table.get_nested_rows()
+            nested_rows[position_number].click()
+            # "position_num" - serial number of the row where position is located
+            # page_planning.select_position_page_planning(str(position_number), 3)
 
-            list_of_webelements_nested_tables = nested_table_inst.get_nested_tables(
-                'The parent nested table cant be located')
+            page_planning.get_add_goods_button().click()
+            page_planning.get_article_list_button().click()
+            # ----- the Article list page is opened , after Add button is pressed
+            self.page_article_list.check_all_checkboxes_article_list()
 
-            self.page_planning_page.select_position_page_planning('1')
+            # ---- Coming back to the Page planning
+            page_planning_new = PagePlanning(self.driver)
+            page_planning_new.wait_spiner_loading()
 
-            self.page_planning_page.get_add_goods_button().click()
+            table_web_element = page_planning_new.get_table()
+            nested_table_new_inst = Table(self.driver, table_web_element)
+            page_planning_new.wait_spiner_loading()
+            # Uncheck the position in order to unlock it for another tests or uses
+            nested_rows = nested_table_new_inst.get_nested_rows()
+            nested_rows.get_nested_columns(2).click()
+            # nested_rows[position_number].click()
 
-            self.page_planning_page.get_article_list_button().click()
+            page_planning_new.get_save_button().click()
+            page_planning_new.wait_spiner_loading()
+            time.sleep(2)
+            # page_planning_new.get_button_back().click()
 
-            # article_table = self.page_article_list.get_article_table()
+    def test_perfomance_10_articles_S05_314(self):
+        ''' S05-314 Case A - 1 page - 10 articles - 1 sec '''
+        self.test_add_goods_article_list()
+        self.page_planning_page.get_save_button()
 
-            # article_table_inst = Table(self.driver, article_table)
+    def test_perfomance_100_articles_S05_314(self):
+        ''' S05-314 Case B - 10 pages - 100 articles - 3 mins '''
+        self.driver.get(self.base_url + 'promo-detail/537386') #'article-planning/535882/2')
+        # In Promo type select the page in PageView widget by its serial numbers
+        self.page_planning_page = PagePlanning(self.driver)
+        time.sleep(1)
+        page_planning_widget_instance = PagesViewWidget(self.driver)
 
-            all_checkboxes = self.page_article_list.get_list_of_checkbox_locators()
+        page_planning_widget_table = page_planning_widget_instance.get_table_content()
+        widget_table_new_inst = Table(self.driver, page_planning_widget_table)
 
-            for checkbox in all_checkboxes:
-                checkbox
-            None
+        # count rows in PageView table and go through each row and add assortment to it
+        page_widget_size = widget_table_new_inst.count_rows()
 
-    # def test_add_goods_havnt_selected_position(self):
+        number_of_pages = 20
+        number_of_positions = 10
+        number_of_articles = 10
+        pages_list = list(range(9, number_of_pages))
+        positions_list = list(range(0, number_of_positions))
+        articles_list = list(range(0, number_of_articles))
 
+        # # # ===== Add Assortments to pages ===== #
+        # for inx in pages_list:
+        #     # row_with_position_webelement = widget_table_new_inst.get_row(inx)
+        #     # Click on assortment cell => pop up window with Assortments should appear,
+        #     # in new window select an assortment => assortment should appear in page_planning_widget
+        #     page_planning_widget_instance.choose_assortment(inx)
+        #     self.promo_actions_page.wait_spiner_loading()
+        #     # time.sleep(1)
+        # # Save the new assortment for the page number 1 , for instance
+        # promo_detail_page_instance = PromoDetailPage(self.driver)
+        # self.promo_actions_page.wait_spiner_loading()
+        # time.sleep(1)
+        # promo_detail_page_instance.click_save_button()
+        # self.promo_actions_page.wait_spiner_loading()
+        # time.sleep(1)
 
-    # def test_flow_creating_promo_action_adding_position_verify_page_planning_parameters(self):
-    #
-    #     table_web_element = self.page_planning_page.get_table()
-    #
-    #     self.page_planning_page.wait_spiner_loading()
+        for page_inx in pages_list:
+
+            page_planning_widget_instance = PagesViewWidget(self.driver)
+            page_planning_widget_table = page_planning_widget_instance.get_table_content()
+            widget_table_new_inst = Table(self.driver, page_planning_widget_table)
+
+            widget_table_new_inst.get_cell_by_row_and_column_inx(page_inx, 1).click()
+
+            # ===== Add positions to pages ===== #
+            for position_inx in positions_list:
+                self.promo_actions_page.wait_spiner_loading()
+                positions_view_instance = PositionsView(self.driver)
+                positions_view_instance.get_new_position_button().click()
+
+                positions_view_table = positions_view_instance.get_table_content()
+                positions_view_inst = Table(self.driver, positions_view_table)
+                self.promo_actions_page.wait_spiner_loading()
+                positions_view_inst.get_cell_by_row_and_column_inx(position_inx, 3).click()
+
+                assortment_pop_up = TreeListPopUp(self.driver, "Assortment popup window")
+                list_of_names = ['2121000: FOOD TROCKEN 1']
+                assortment_el = assortment_pop_up.select_list_of_webelements_from_tree_by_names(list_of_names)
+                # assortment_el.click()
+                assortment_pop_up.close_widget_window()
+
+            positions_view_instance.get_save_button().click()
+            self.promo_actions_page.wait_spiner_loading()
+            time.sleep(1)
+            positions_view_instance.get_back_button().click()
+            self.promo_actions_page.wait_spiner_loading()
+            time.sleep(1)
+
+            # ===== Add articles to pages ===== #
+            self.page_planning_page = PagePlanning(self.driver)
+            time.sleep(1)
+            page_planning_widget_instance = PagesViewWidget(self.driver)
+
+            page_planning_widget_table = page_planning_widget_instance.get_table_content()
+            widget_table_new_inst = Table(self.driver, page_planning_widget_table)
+
+            widget_table_new_inst.get_cell_by_row_and_column_inx(page_inx, 0).click()
+
+            for ind in articles_list:
+                self.test_add_goods_article_list(ind)
+
+            self.page_planning_page.get_button_back().click()
+            self.page_planning_page.wait_spiner_loading()
 
 

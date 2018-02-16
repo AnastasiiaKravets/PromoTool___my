@@ -1,7 +1,7 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.wait import WebDriverWait
-from BasePage import BasePage
+from Pages.page_planning.PagePlanning import PagePlanning
+from Pages.positions_view.PositionsView import PositionsView
 from utilities.BaseWidget import BaseWidget
 from utilities.Table import TableFilter
 from utilities.Table import Table
@@ -11,6 +11,15 @@ class PagesViewWidget(BaseWidget):
 
     new_page_button = (By.CSS_SELECTOR, 'button.button-success')
     delete_button = (By.CSS_SELECTOR, 'button.button-danger')
+
+    position_button = (By.CSS_SELECTOR, 'div[data-role="elink"]')
+    planning_button = (By.CSS_SELECTOR, 'div[data-role="elink"]')
+
+
+    """HEADERS"""
+    assortment_header = (By.CSS_SELECTOR, 'th[data-field="Assortment"]')
+
+
 
     promo_page = {
         'Number': 0,
@@ -34,14 +43,14 @@ class PagesViewWidget(BaseWidget):
         super(PagesViewWidget, self).__init__(driver,
                                               (By.CSS_SELECTOR, 'div.b-list-of-promo-pages.k-grid.k-widget'),
                                               'Pages view')
-
     def get_tabel_labels(self):
         table_filter = TableFilter(self.driver)
         table = table_filter.get_all_headers_table()[0]
         print(table_filter.get_all_headers_from_table_as_text(table))
 
-    def choose_assortment(self, row):
-        assortment = row[4]
+    def choose_assortment(self, row_index:int):
+        table = Table(self.driver, self.get_table_content())
+        assortment = table.get_row(row_index)[table.get_column_index(self.assortment_header)]
         self.driver.execute_script("return arguments[0].scrollIntoView();", assortment)
         assortment.click()
         pop_up = WebDriverWait(self.driver, 10).until(EC.visibility_of_any_elements_located((By.CSS_SELECTOR, 'div.k-window')), '"Assortment" window is invisible')[0]
@@ -57,7 +66,7 @@ class PagesViewWidget(BaseWidget):
         return self
 
     def get_assortment_value(self, row):
-        assortment_field = row[4]
+        assortment_field = row[Table(self.driver, self.get_table_content()).get_column_index(self.assortment_header)]
         self.driver.execute_script("return arguments[0].scrollIntoView();", assortment_field)
         list_elements = assortment_field.find_elements_by_tag_name('li')
         list_options_text = []
@@ -67,9 +76,10 @@ class PagesViewWidget(BaseWidget):
 
     def add_new_page(self):
         new_page_button = self.wait.until(EC.visibility_of_element_located(self.new_page_button), 'New page button is invisible')
-        if self.is_button_disabled(self.new_page_button, 'New page'):
-            raise Exception('New page button is disabled')
+        self.wait_element_has_not_state(self.new_page_button, 'k-state-disabled',
+                                        '"New page" button still be disabled')
         new_page_button.click()
+        self.wait_spiner_loading()
         return self
 
     def delete_page_with_yes_or_no_option(self, row_index: int, yes_no_option: str):
@@ -82,6 +92,27 @@ class PagesViewWidget(BaseWidget):
         delete_button.click()
         # TODO yes_no_option
         return self
+
+    def get_position_page_by_row_number(self, row_index=0):
+        table = Table(self.driver, self.get_table_content())
+        position_cell = table.get_row(row_index)[1]
+        button = WebDriverWait(position_cell, 5)\
+            .until(EC.presence_of_element_located(self.position_button), 'Position button is absent')
+        self.driver.execute_script("return arguments[0].scrollIntoView();", button)
+        button.click()
+        return PositionsView(self.driver)
+
+    def get_planning_page_by_row_index(self, row_index=0):
+        table = Table(self.driver, self.get_table_content())
+        planning_cell = table.get_row(row_index)[0]
+        button = WebDriverWait(planning_cell, 5)\
+            .until(EC.presence_of_element_located(self.planning_button), 'Position button is absent')
+        self.driver.execute_script("return arguments[0].scrollIntoView();", button)
+        button.click()
+        return PagePlanning(self.driver)
+
+
+
 
     def click_on_page_planning_by_its_number(self, page_number):
         """
@@ -169,3 +200,4 @@ class PagesViewWidget(BaseWidget):
 
 
             return self.promo_page
+
